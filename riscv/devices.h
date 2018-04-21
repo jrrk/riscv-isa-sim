@@ -38,6 +38,15 @@ class rom_device_t : public abstract_device_t {
   std::vector<char> data;
 };
 
+class vga_device_t : public abstract_device_t {
+ public:
+  vga_device_t();
+  bool load(reg_t addr, size_t len, uint8_t* bytes);
+  bool store(reg_t addr, size_t len, const uint8_t* bytes);
+ private:
+  std::vector<char> data;
+};
+
 class mem_t : public abstract_device_t {
  public:
   mem_t(size_t size) : len(size) {

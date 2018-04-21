@@ -327,6 +327,9 @@ void sim_t::make_dtb()
 
   boot_rom.reset(new rom_device_t(rom));
   bus.add_device(DEFAULT_RSTVEC, boot_rom.get());
+
+  vga.reset(new vga_device_t());
+  bus.add_device(0x41008000, vga.get());
 }
 
 char* sim_t::addr_to_mem(reg_t addr) {
