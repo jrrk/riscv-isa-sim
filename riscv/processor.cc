@@ -234,6 +234,8 @@ void processor_t::enter_debug_mode(uint8_t cause)
   state.pc = DEBUG_ROM_ENTRY;
 }
 
+static uint64_t user_ecalls;
+
 void processor_t::take_trap(trap_t& t, reg_t epc)
 {
   if (debug) {
@@ -273,6 +275,22 @@ void processor_t::take_trap(trap_t& t, reg_t epc)
     state.scause = t.cause();
     state.sepc = epc;
     state.stval = t.get_tval();
+
+    if (state.scause == CAUSE_USER_ECALL)
+      {
+	int sys = state.XPR[17];
+	printf("%lx: ", epc);
+	switch(sys)
+	  {
+#define __SYSCALL(x, y) case x: puts(#y); break;
+#include <asm-generic/unistd.h>	    
+#undef __SYSCALL
+	  default:
+	    printf("unknown ecall(%d);\n", sys);
+	    
+	  }
+	++user_ecalls;
+      }
 
     reg_t s = state.mstatus;
     s = set_field(s, MSTATUS_SPIE, get_field(s, MSTATUS_SIE));
