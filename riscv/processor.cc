@@ -31,6 +31,7 @@ processor_t::processor_t(const char* isa, sim_t* sim, uint32_t id,
   disassembler = new disassembler_t(max_xlen);
 
   reset();
+  debug_syscalls = getenv("DEBUG_SYSCALLS") != 0;
 }
 
 processor_t::~processor_t()
@@ -276,7 +277,7 @@ void processor_t::take_trap(trap_t& t, reg_t epc)
     state.sepc = epc;
     state.stval = t.get_tval();
 
-    if (state.scause == CAUSE_USER_ECALL)
+    if (debug_syscalls && (state.scause == CAUSE_USER_ECALL))
       {
 	int sys = state.XPR[17];
 	printf("%lx: ", epc);

@@ -46,6 +46,8 @@ private:
   std::string dts;
   std::unique_ptr<rom_device_t> boot_rom;
   std::unique_ptr<vga_device_t> vga;
+  std::unique_ptr<keyb_device_t> keyb;
+  std::unique_ptr<eth_device_t> eth;
   std::unique_ptr<clint_t> clint;
   bus_t bus;
 

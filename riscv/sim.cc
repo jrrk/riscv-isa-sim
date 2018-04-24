@@ -330,6 +330,12 @@ void sim_t::make_dtb()
 
   vga.reset(new vga_device_t());
   bus.add_device(0x41008000, vga.get());
+
+  keyb.reset(new keyb_device_t());
+  bus.add_device(0x41000000, keyb.get());
+
+  eth.reset(new eth_device_t());
+  bus.add_device(0x41020000, eth.get());
 }
 
 char* sim_t::addr_to_mem(reg_t addr) {

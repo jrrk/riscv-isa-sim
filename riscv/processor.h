@@ -198,7 +198,7 @@ public:
   bool store(reg_t addr, size_t len, const uint8_t* bytes);
 
   // When true, display disassembly of each instruction that's executed.
-  bool debug;
+  bool debug, debug_syscalls;
   // When true, take the slow simulation path.
   bool slow_path();
   bool halted() { return state.dcsr.cause ? true : false; }
