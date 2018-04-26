@@ -47,3 +47,5 @@
 #define HEADER_SHIFT                16      /* Shift value for length */
 #define ARP_PACKET_SIZE             28      /* Max ARP packet size */
 #define HEADER_IP_LENGTH_OFFSET     16      /* IP Length Offset */
+
+extern void recv();
