@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include "sim_main.h"
 
 volatile bool ctrlc_pressed = false;
 static void handle_signal(int sig)
@@ -83,9 +84,15 @@ void sim_t::main()
       interactive();
     else
       step(INTERLEAVE);
-    if (remote_bitbang) {
-      remote_bitbang->tick();
-    }
+    if (remote_bitbang)
+      {
+        remote_bitbang->tick();
+      }
+    if (sd_poll())
+      {
+        /* always take interrupt on the first processor */
+        procs[0]->state.mip |= ((reg_t)1 << IRQ_S_SOFT);
+      }
   }
 }
 

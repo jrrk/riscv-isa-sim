@@ -66,11 +66,6 @@ module usimv_top(
  input wire [31:0]  core_lsu_wdata,
  input 		    core_sd_we,
  input wire 	    sd_detect,
-/*
- input wire [3:0]   fifo_status,
- input wire [31:0]  rx_fifo_status,
- input wire [31:0]  tx_fifo_status, 
-*/
  input wire [31:0]  data_out_tx,
 // input              sd_cmd_to_host,
 // input [3:0]        sd_dat_to_host,

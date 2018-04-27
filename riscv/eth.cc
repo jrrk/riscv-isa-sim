@@ -128,7 +128,6 @@ int recv(void *dummy)
 {
   enum {macrev=1, promisc=1};
   int sockopt;
-  //  logf = fopen("recv.log", "w");
 
   /* Open PF_PACKET socket, listening for EtherType ETHER_TYPE */
   if ((packet_socket = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1) {
@@ -178,47 +177,43 @@ int recv(void *dummy)
   }
   while (1)
     {
-      //      if (irq)
-        {
-          uint8_t buf[BUF_SIZ];
-          /* Header structures */
-          struct ether_header *eh = (struct ether_header *) buf;
-          struct iphdr *iph = (struct iphdr *) (buf + sizeof(struct ether_header));
-          struct udphdr *udph = (struct udphdr *) (buf + sizeof(struct iphdr) + sizeof(struct ether_header));
-          numbytes = recvfrom(packet_socket, buf, BUF_SIZ, 0, NULL, NULL);
-          //	printf("listener: got packet %lu bytes\n", numbytes);
+      uint8_t buf[BUF_SIZ];
+      /* Header structures */
+      struct ether_header *eh = (struct ether_header *) buf;
+      struct iphdr *iph = (struct iphdr *) (buf + sizeof(struct ether_header));
+      struct udphdr *udph = (struct udphdr *) (buf + sizeof(struct iphdr) + sizeof(struct ether_header));
+      numbytes = recvfrom(packet_socket, buf, BUF_SIZ, 0, NULL, NULL);
+      //	printf("listener: got packet %lu bytes\n", numbytes);
           
-          /* Check the packet is for me */
-            if (eh->ether_dhost[0] == mac_addr_rev[5] &&
-                eh->ether_dhost[1] == mac_addr_rev[4] &&
-                eh->ether_dhost[2] == mac_addr_rev[3] &&
-                eh->ether_dhost[3] == mac_addr_rev[2] &&
-                eh->ether_dhost[4] == mac_addr_rev[1] &&
-                eh->ether_dhost[5] == mac_addr_rev[0]) {
-            //		printf("Correct destination MAC address\n");
-            inqueue(buf, numbytes);
-          } else if ((    eh->ether_dhost[0] &
-                          eh->ether_dhost[1] &
-                          eh->ether_dhost[2] &
-                          eh->ether_dhost[3] &
-                          eh->ether_dhost[4] &
-                          eh->ether_dhost[5]) == 0xFF) {
-            
-            //		printf("Broadcast destination MAC address\n");
-            inqueue(buf, numbytes);
-          }
-          else {
-            /*		printf("Wrong destination MAC: %x:%x:%x:%x:%x:%x\n",
+      /* Check the packet is for me */
+      if (eh->ether_dhost[0] == mac_addr_rev[5] &&
+          eh->ether_dhost[1] == mac_addr_rev[4] &&
+          eh->ether_dhost[2] == mac_addr_rev[3] &&
+          eh->ether_dhost[3] == mac_addr_rev[2] &&
+          eh->ether_dhost[4] == mac_addr_rev[1] &&
+          eh->ether_dhost[5] == mac_addr_rev[0]) {
+        //		printf("Correct destination MAC address\n");
+        inqueue(buf, numbytes);
+      } else if ((    eh->ether_dhost[0] &
+                      eh->ether_dhost[1] &
+                      eh->ether_dhost[2] &
+                      eh->ether_dhost[3] &
+                      eh->ether_dhost[4] &
+                      eh->ether_dhost[5]) == 0xFF) {
+        
+        //		printf("Broadcast destination MAC address\n");
+        inqueue(buf, numbytes);
+      }
+      else {
+        /*		printf("Wrong destination MAC: %x:%x:%x:%x:%x:%x\n",
                         eh->ether_dhost[0],
                         eh->ether_dhost[1],
                         eh->ether_dhost[2],
                         eh->ether_dhost[3],
                         eh->ether_dhost[4],
                         eh->ether_dhost[5]);
-            */
-          }
-          //          usleep(10000);
-        }
+        */
+      }
     }
   return 0;
 }
