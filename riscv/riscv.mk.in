@@ -48,7 +48,6 @@ riscv_srcs = \
 	vga.cc \
 	keyb.cc \
 	eth.cc \
-	sdcard.cc \
 	clint.cc \
 	debug_module.cc \
 	remote_bitbang.cc \

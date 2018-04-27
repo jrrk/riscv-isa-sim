@@ -85,7 +85,7 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 CC            := @CC@
 CXX           := @CXX@
 CFLAGS        += @CFLAGS@ -DPREFIX=\"$(prefix)\"
-CPPFLAGS      += @CPPFLAGS@
+CPPFLAGS      += @CPPFLAGS@ -I../sdcard/obj_dir  -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -I../dummy_sd 
 CXXFLAGS      += @CXXFLAGS@ -DPREFIX=\"$(prefix)\"
 COMPILE       := $(CXX) -fPIC -MMD -MP $(CPPFLAGS) $(CXXFLAGS) \
                  $(sprojs_include)
@@ -98,7 +98,7 @@ COMPILE_C     := $(CC) -fPIC -MMD -MP $(CPPFLAGS) $(CFLAGS) \
 comma := ,
 LD            := $(CXX)
 LDFLAGS       := @LDFLAGS@
-LIBS          := @LIBS@
+LIBS          := @LIBS@ ../sdcard/obj_dir/Vusimv_top__ALL.a
 LINK          := $(LD) -L. $(LDFLAGS) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
 
 # Library creation

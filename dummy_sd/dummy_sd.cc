@@ -70,7 +70,7 @@
 #include <netinet/ether.h>
 
 #include "devices.h"
-#include "../sdcard/sim_main.h"
+#include "sim_main.h"
 
 static unsigned core_lsu_addr, core_lsu_wdata, core_sd_we, sd_detect;
 static unsigned sd_cmd_resp_sel, sd_reset, sd_transf_cnt, sd_buf[8192];

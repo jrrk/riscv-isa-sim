@@ -1,7 +1,8 @@
-dummy_sd_subproject_deps = \
-	spike_main \
-	riscv \
-	softfloat \
+dummy_sd_subproject_deps =
+
+softfloat_hdrs = \
+	../sdcard/obj_dir/Vusimv_top.h
 
 dummy_sd_srcs = \
 	dummy_sd.cc \
+	sim_main.cc \
