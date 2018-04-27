@@ -48,6 +48,7 @@ private:
   std::unique_ptr<vga_device_t> vga;
   std::unique_ptr<keyb_device_t> keyb;
   std::unique_ptr<eth_device_t> eth;
+  std::unique_ptr<sd_device_t> sdcard;
   std::unique_ptr<clint_t> clint;
   bus_t bus;
 

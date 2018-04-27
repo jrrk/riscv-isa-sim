@@ -336,6 +336,9 @@ void sim_t::make_dtb()
 
   eth.reset(new eth_device_t());
   bus.add_device(0x41020000, eth.get());
+
+  sdcard.reset(new sd_device_t());
+  bus.add_device(0x41010000, sdcard.get());
 }
 
 char* sim_t::addr_to_mem(reg_t addr) {
