@@ -88,7 +88,7 @@ void sim_t::main()
       {
         remote_bitbang->tick();
       }
-    if (sd_poll())
+    if (sd_irq)
       {
         /* always take interrupt on the first processor */
         procs[0]->state.mip |= ((reg_t)1 << IRQ_S_SOFT);

@@ -1,8 +1,6 @@
 dummy_sd_subproject_deps =
 
-softfloat_hdrs = \
-	../sdcard/obj_dir/Vusimv_top.h
+softfloat_hdrs =
 
 dummy_sd_srcs = \
-	dummy_sd.cc \
-	sim_main.cc \
+	fake_sd.cc \
