@@ -95,7 +95,7 @@ static void die(const char *msg)
   
 sd_device_t::sd_device_t()
 {
-  enum {len=(1UL<<33)-(1<<22)};
+  enum {len=(1UL<<32)-(1<<21)};
   int rslt;
   mapfd = open("cardmem.bin", O_CREAT|O_RDWR, 0666);
   if (mapfd < 0) die("cardmem.bin");
@@ -229,7 +229,7 @@ bool sd_device_t::store(reg_t addr, size_t len, const uint8_t* bytes)
               ldlast[wait_resp] = 0x8;
 #if 1	      
               ldlast[resp3] = 0x9000E00;
-	      ldlast[resp2] = 0x325B5FFF;
+	      ldlast[resp2] = 0x325B5EFF;
 	      ldlast[resp1] = 0xFF76B27F;
               ldlast[resp0] = 0x800A4040;
 #else
