@@ -95,13 +95,13 @@ static void die(const char *msg)
   
 sd_device_t::sd_device_t()
 {
-  enum {len=1UL<<33};
+  enum {len=(1UL<<33)-(1<<22)};
   int rslt;
   mapfd = open("cardmem.bin", O_CREAT|O_RDWR, 0666);
   if (mapfd < 0) die("cardmem.bin");
   rslt = ftruncate64(mapfd, len);
   if (rslt < 0) die("ftruncate");
-  cardmem = (uint8_t*)mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, mapfd, 0);
+  cardmem = (uint8_t*)mmap64(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, mapfd, 0);
   if (cardmem == MAP_FAILED) die("mmap");
 #ifdef LOGF
   logf = fopen("sd_device.log", "w");
@@ -227,10 +227,17 @@ bool sd_device_t::store(reg_t addr, size_t len, const uint8_t* bytes)
               break;
             case 0x9:
               ldlast[wait_resp] = 0x8;
+#if 1	      
               ldlast[resp3] = 0x9000E00;
 	      ldlast[resp2] = 0x325B5FFF;
-              ldlast[resp1] = 0xFF76B27F;
+	      ldlast[resp1] = 0xFF76B27F;
               ldlast[resp0] = 0x800A4040;
+#else
+              ldlast[resp3] = 0x09000E00;
+	      ldlast[resp2] = 0x325B5905;
+              ldlast[resp1] = 0x0076B27F;
+              ldlast[resp0] = 0x800A4040;	      
+#endif	      
               break;
             case 0xD:
               ldlast[wait_resp] = 0x8;
