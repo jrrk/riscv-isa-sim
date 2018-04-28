@@ -72,16 +72,13 @@
 #include "devices.h"
 #include "sim_main.h"
 
-enum {DEBUG=1};
-
 int sd_irq;
 
-static uint32_t core_lsu_addr, core_lsu_wdata, core_sd_we, sd_detect, sd_irq_en, sd_irq_stat, old_irq, mask;
+enum {DEBUG=1};
+
+static uint32_t core_lsu_addr, core_lsu_wdata, core_sd_we, sd_detect, sd_irq_en, sd_irq_stat, mask;
 static uint32_t sd_cmd_resp_sel, sd_reset, sd_transf_cnt, sd_buf[8192];
 static int sd_flag;
-#ifdef LOGF
-static FILE *logf;
-#endif
 static uint32_t stlast[32];
 static uint32_t ldlast[32];
 static int mapfd;
@@ -103,9 +100,6 @@ sd_device_t::sd_device_t()
   if (rslt < 0) die("ftruncate");
   cardmem = (uint8_t*)mmap64(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, mapfd, 0);
   if (cardmem == MAP_FAILED) die("mmap");
-#ifdef LOGF
-  logf = fopen("sd_device.log", "w");
-#endif
   sd_detect = 0;
   sd_flag = 1;
 }
@@ -180,11 +174,11 @@ bool sd_device_t::store(reg_t addr, size_t len, const uint8_t* bytes)
   if (addr < 0x8000)
     {
       core_sd_we = 1;
-      core_lsu_addr = addr;
+      core_lsu_addr = addr >> 2;
       memcpy(&core_lsu_wdata, bytes, len);
       core_sd_we = 0;
 #ifdef LOGF   
-      if (DEBUG || (stlast[core_lsu_addr >> 2] != core_lsu_wdata)) switch(core_lsu_addr >> 2)
+      if (DEBUG || (stlast[core_lsu_addr] != core_lsu_wdata)) switch(core_lsu_addr)
         {
         case  0: fprintf(logf, "store(sd_align, 0x%X);\n", core_lsu_wdata); break;
         case  1: fprintf(logf, "store(sd_clk_din, 0x%X);\n", core_lsu_wdata); break;
@@ -201,96 +195,95 @@ bool sd_device_t::store(reg_t addr, size_t len, const uint8_t* bytes)
         default: fprintf(logf, "store(0x%X, 0x%X);\n", core_lsu_addr, core_lsu_wdata);
         }
 #endif
-      stlast[core_lsu_addr >> 2] = core_lsu_wdata;
-      if (stlast[start_reg] & 1)
-        {
-          switch(stlast[cmd_reg]&255)
-            {
-            case 0x0:
-              ldlast[wait_resp] = 0x0;
-	      mask = 0;
-              break;
-            case 0x2:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp3] = 0x3F00534D;
-              ldlast[resp2] = 0x534D4920;
-              ldlast[resp1] = 0x20100251;
-              ldlast[resp0] = 0x66450082;
-              break;
-            case 0x3:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp0] = 0xBEEF0700;
-              break;
-            case 0x7:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp0] = 0x508;
-              break;
-            case 0x9:
-              ldlast[wait_resp] = 0x8;
+      stlast[core_lsu_addr] = core_lsu_wdata;
+      if (core_lsu_addr==start_reg)
+	{
+	  if (stlast[start_reg] & 1)
+	    {
+	      switch(stlast[cmd_reg]&255)
+		{
+		case 0x0:
+		  ldlast[wait_resp] = 0x0;
+		  mask = 0;
+		  break;
+		case 0x2:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp3] = 0x3F00534D;
+		  ldlast[resp2] = 0x534D4920;
+		  ldlast[resp1] = 0x20100251;
+		  ldlast[resp0] = 0x66450082;
+		  break;
+		case 0x3:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp0] = 0xBEEF0700;
+		  break;
+		case 0x7:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp0] = 0x508;
+		  break;
+		case 0x9:
+		  ldlast[wait_resp] = 0x8;
 #if 1	      
-              ldlast[resp3] = 0x9000E00;
-	      ldlast[resp2] = 0x325B5EFF;
-	      ldlast[resp1] = 0xFF76B27F;
-              ldlast[resp0] = 0x800A4040;
+		  ldlast[resp3] = 0x9000E00;
+		  ldlast[resp2] = 0x325B5EFF;
+		  ldlast[resp1] = 0xFF76B27F;
+		  ldlast[resp0] = 0x800A4040;
 #else
-              ldlast[resp3] = 0x09000E00;
-	      ldlast[resp2] = 0x325B5905;
-              ldlast[resp1] = 0x0076B27F;
-              ldlast[resp0] = 0x800A4040;	      
+		  ldlast[resp3] = 0x09000E00;
+		  ldlast[resp2] = 0x325B5905;
+		  ldlast[resp1] = 0x0076B27F;
+		  ldlast[resp0] = 0x800A4040;	      
 #endif	      
-              break;
-            case 0xD:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp0] = 0x00000900;
-	      ldlast[status_resp] |= 1<<10;
-              break;
-            case 0x11:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp0] = 0x0;
-	      ldlast[status_resp] |= 1<<10;
-	      memcpy(sd_buf, cardmem+stlast[arg_reg], 512);
-              break;
-            case 0x18:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp0] = 0x00000900;
-	      memcpy(cardmem+stlast[arg_reg], sd_buf, 512);
-              break;
-            case 0x29:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp0] = 0xC0FF8000;
-              break;
-            case 0x33:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp0] = 0x0;
-	      ldlast[status_resp] |= 1<<10;
-              break;
-            case 0x37:
-              ldlast[wait_resp] = 0x8;
-              ldlast[resp0] = 0x120 | mask;
-	      mask = 0x800;
-              break;
-            case 0x5:
-            case 0x34:
-            default:
-              ldlast[wait_resp] = stlast[timeout_reg]+1;
-              ldlast[resp0] = 0;
-              break;
-            }
-          ldlast[status_resp] |= 1<<8;
+		  break;
+		case 0xD:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp0] = 0x00000900;
+		  ldlast[status_resp] |= 1<<10;
+		  break;
+		case 0x11:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp0] = 0x0;
+		  ldlast[status_resp] |= 1<<10;
+		  memcpy(sd_buf, cardmem+stlast[arg_reg], 512);
+		  break;
+		case 0x18:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp0] = 0x00000900;
+		  memcpy(cardmem+stlast[arg_reg], sd_buf, 512);
+		  break;
+		case 0x29:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp0] = 0xC0FF8000;
+		  break;
+		case 0x33:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp0] = 0x0;
+		  ldlast[status_resp] |= 1<<10;
+		  break;
+		case 0x37:
+		  ldlast[wait_resp] = 0x8;
+		  ldlast[resp0] = 0x120 | mask;
+		  mask = 0x800;
+		  break;
+		case 0x5:
+		case 0x34:
+		default:
+		  ldlast[wait_resp] = stlast[timeout_reg]+1;
+		  ldlast[resp0] = 0;
+		  break;
+		}
+	      ldlast[status_resp] |= 1<<8;
+	    }
+	  else
+	    {
+	      ldlast[status_resp] = 0;
+	    }
         }
+      for (int i = 0; i < 16; i++) ldlast[i+16] = stlast[i];
       sd_irq_en = stlast[irq_en_reg];
       sd_irq_stat = 0x8 | (ldlast[status_resp] & (1<<10) ? 2:0) | (ldlast[status_resp] & (1<<8) ? 1:0);
       ldlast[irq_stat_resp] = sd_irq_stat;
       sd_irq = sd_irq_en & sd_irq_stat ? 1 : 0;
-      for (int i = 0; i < 16; i++) ldlast[i+16] = stlast[i];
-#ifdef LOGF
-      if (old_irq != sd_irq)
-        {
-          fprintf(logf, "sd_irq=%d\n", sd_irq);
-          old_irq = sd_irq;
-        }
-      fflush(logf);
-#endif
     }
   else
     {
@@ -305,3 +298,4 @@ bool sd_device_t::store(reg_t addr, size_t len, const uint8_t* bytes)
 
   return true;
 }
+ 

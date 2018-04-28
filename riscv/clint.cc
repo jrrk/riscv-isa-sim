@@ -70,3 +70,8 @@ void clint_t::increment(reg_t inc)
       procs[i]->state.mip |= MIP_MTIP;
   }
 }
+
+uint64_t clint_t::timeget()
+{
+  return mtime;
+}

@@ -16,6 +16,13 @@
 #include "sim_main.h"
 
 volatile bool ctrlc_pressed = false;
+
+#define LOGF
+
+#ifdef LOGF
+static FILE *logf = stdout;
+#endif
+
 static void handle_signal(int sig)
 {
   if (ctrlc_pressed)
@@ -75,6 +82,7 @@ void sim_thread_main(void* arg)
 
 void sim_t::main()
 {
+  static int old_irq = -1;
   if (!debug && log)
     set_procs_debug(true);
 
@@ -88,10 +96,22 @@ void sim_t::main()
       {
         remote_bitbang->tick();
       }
-    if (sd_irq)
+    if (old_irq != sd_irq)
       {
-        /* always take interrupt on the first processor */
-        procs[0]->state.mip |= ((reg_t)1 << IRQ_S_SOFT);
+#ifdef LOGF
+	fprintf(logf, "sd_irq=%d @ %ld\n", sd_irq, clint->timeget());
+#endif	
+	if (sd_irq)
+	  {
+	    /* need to service simulated SD card */
+	    procs[current_proc]->state.mip |= ((reg_t)1 << IRQ_S_SOFT);
+	  }
+	else
+	  {
+	    /* finish servicing simulated SD card */
+	    procs[current_proc]->state.mip &= ~((reg_t)1 << IRQ_S_SOFT);
+	  }
+	old_irq = sd_irq;
       }
   }
 }
