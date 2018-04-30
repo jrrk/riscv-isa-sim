@@ -72,6 +72,10 @@
 #include "devices.h"
 #include "sdcard.h"
 
+// #define LOGF
+#ifdef LOGF
+static FILE *logf;
+#endif
 int sd_irq;
 
 enum {DEBUG=1};
@@ -102,6 +106,9 @@ sd_device_t::sd_device_t()
   if (cardmem == MAP_FAILED) die("mmap");
   sd_detect = 0;
   sd_flag = 1;
+#ifdef LOGF
+  logf = fopen("sdcard.log","w");
+#endif  
 }
 
 bool sd_device_t::load(reg_t addr, size_t len, uint8_t* bytes)
@@ -249,6 +256,7 @@ bool sd_device_t::store(reg_t addr, size_t len, const uint8_t* bytes)
 		case 0x18:
 		  ldlast[wait_resp] = 0x8;
 		  ldlast[resp0] = 0x00000900;
+		  ldlast[status_resp] |= 1<<10;
 		  memcpy(cardmem+stlast[arg_reg], sd_buf, 512);
 		  break;
 		case 0x29:

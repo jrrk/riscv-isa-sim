@@ -46,7 +46,7 @@ void keyb_poll()
           tmp[rslt] = 0;
           if ((*tmp < ' ') && (*tmp != 0x0d))
             {
-            printf("read(0, \"\\x%.2x\", %d);\n", *tmp, rslt);
+              //            printf("read(0, \"\\x%.2x\", %d);\n", *tmp, rslt);
             if (*tmp == 0x1c) kill(getpid(), SIGQUIT);
             }
           while (rslt-- > 0)
