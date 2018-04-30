@@ -1,6 +1,0 @@
-dummy_sd_subproject_deps =
-
-softfloat_hdrs =
-
-dummy_sd_srcs = \
-	fake_sd.cc \

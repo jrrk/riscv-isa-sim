@@ -214,6 +214,7 @@ int recv(void *dummy)
                         eh->ether_dhost[5]);
         */
       }
+      keyb_poll();
     }
   return 0;
 }

@@ -70,7 +70,7 @@
 #include <netinet/ether.h>
 
 #include "devices.h"
-#include "sim_main.h"
+#include "sdcard.h"
 
 int sd_irq;
 

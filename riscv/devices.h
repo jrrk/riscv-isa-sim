@@ -7,6 +7,9 @@
 #include <map>
 #include <vector>
 
+extern int sd_irq, keyb_irq;
+extern void keyb_poll();
+
 class processor_t;
 
 class abstract_device_t {

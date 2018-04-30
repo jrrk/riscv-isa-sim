@@ -17,6 +17,7 @@
 
 #include "devices.h"
 
+int keyb_irq;
 static char outc, fifo[256];
 static int head, tail;
 static struct termios termios;
@@ -31,7 +32,7 @@ keyb_device_t::keyb_device_t()
   tcsetattr(0, 0, &termios);
 }
 
-static void count()
+void keyb_poll()
 {
   if (head == tail)
     {
@@ -54,8 +55,8 @@ static void count()
               head &= 255;
             }
         }
-      usleep(1);
     }
+  keyb_irq = (head != tail);
 }
 
 bool keyb_device_t::load(reg_t addr, size_t len, uint8_t* bytes)
@@ -63,7 +64,6 @@ bool keyb_device_t::load(reg_t addr, size_t len, uint8_t* bytes)
   int rslt, cnt;
   if (addr + len > 4)
     return false;
-  count();
   bytes[2] = head == tail ? 1 : 0;
   bytes[1] = outc;
   return true;

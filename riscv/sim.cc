@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
-#include "sim_main.h"
 
 volatile bool ctrlc_pressed = false;
 
@@ -96,22 +95,15 @@ void sim_t::main()
       {
         remote_bitbang->tick();
       }
-    if (old_irq != sd_irq)
+    if (sd_irq||keyb_irq)
       {
-#ifdef LOGF
-	fprintf(logf, "sd_irq=%d @ %ld\n", sd_irq, clint->timeget());
-#endif	
-	if (sd_irq)
-	  {
-	    /* need to service simulated SD card */
-	    procs[current_proc]->state.mip |= ((reg_t)1 << IRQ_S_SOFT);
-	  }
-	else
-	  {
-	    /* finish servicing simulated SD card */
-	    procs[current_proc]->state.mip &= ~((reg_t)1 << IRQ_S_SOFT);
-	  }
-	old_irq = sd_irq;
+        /* need to service simulated SD card */
+        procs[current_proc]->state.mip |= ((reg_t)1 << IRQ_S_SOFT);
+      }
+    else
+      {
+        /* finish servicing simulated SD card */
+        procs[current_proc]->state.mip &= ~((reg_t)1 << IRQ_S_SOFT);
       }
   }
 }
