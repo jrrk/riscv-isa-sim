@@ -151,10 +151,18 @@
 #define IRQ_HOST     13
 
 #define DEFAULT_RSTVEC     0x00001000
-#define CLINT_BASE         0x02000000
 #define CLINT_SIZE         0x000c0000
-#define EXT_IO_BASE        0x40000000
 #define DRAM_BASE          0x80000000
+
+enum {bram_base = 0x40000000,
+      keyb_base = 0x41000000,
+      uart_base = 0x41004000, // This is a placeholder for future implementation
+       vga_base = 0x41008000,
+        sd_base = 0x41010000,
+        sd_bram = 0x41018000,
+       eth_base = 0x41020000,
+     spare_base = 0x41028000,
+     clint_base = 0x41030000};
 
 // page table entry (PTE) fields
 #define PTE_V     0x001 // Valid

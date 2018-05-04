@@ -133,7 +133,7 @@ public:
     }
 
   // template for functions that perform an atomic memory operation
-  #define amo_func(type) \
+  #define amo_func_orig(type) \
     template<typename op> \
     type##_t amo_##type(reg_t addr, op f) { \
       if (addr & (sizeof(type##_t)-1)) \
@@ -150,6 +150,18 @@ public:
         throw trap_store_access_fault(t.get_tval()); \
       } \
     }
+
+  #define amo_func_abort(type) \
+    template<typename op> \
+    type##_t amo_##type(reg_t addr, op f) { \
+      abort(); \
+    }
+
+#ifdef AMO_ABORT
+#define amo_func amo_func_abort
+#else
+#define amo_func amo_func_orig
+#endif
 
   void store_float128(reg_t addr, float128_t val)
   {

@@ -45,6 +45,7 @@ private:
   reg_t start_pc;
   std::string dts;
   std::unique_ptr<rom_device_t> boot_rom;
+  std::unique_ptr<rom_device_t> blockram;
   std::unique_ptr<vga_device_t> vga;
   std::unique_ptr<keyb_device_t> keyb;
   std::unique_ptr<eth_device_t> eth;

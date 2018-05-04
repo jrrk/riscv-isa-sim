@@ -64,7 +64,8 @@ sim_t::sim_t(const char* isa, size_t nprocs, bool halted, reg_t start_pc,
   }
 
   clint.reset(new clint_t(procs));
-  bus.add_device(CLINT_BASE, clint.get());
+  bus.add_device(clint_base, clint.get());
+
 }
 
 sim_t::~sim_t()
@@ -263,13 +264,13 @@ void sim_t::make_dtb()
   start_pc = start_pc == reg_t(-1) ? get_entry_point() : start_pc;
 
   uint32_t reset_vec[reset_vec_size] = {
-    0x297,                                      // auipc  t0,0x0
-    0x28593 + (reset_vec_size * 4 << 20),       // addi   a1, t0, &dtb
+    0x00000297,                                 // auipc  t0,0x0
+    0x400005b7,                                 // lui    a1, 0x40000
     0xf1402573,                                 // csrr   a0, mhartid
     get_core(0)->xlen == 32 ?
       0x0182a283u :                             // lw     t0,24(t0)
       0x0182b283u,                              // ld     t0,24(t0)
-    0x28067,                                    // jr     t0
+    0x00028067,                                 // jr     t0
     0,
     (uint32_t) (start_pc & 0xffffffff),
     (uint32_t) (start_pc >> 32)
@@ -320,12 +321,12 @@ void sim_t::make_dtb()
          "    #size-cells = <2>;\n"
          "    compatible = \"ucbbar,spike-bare-soc\", \"simple-bus\";\n"
          "    ranges;\n"
-         "    clint@" << CLINT_BASE << " {\n"
+         "    clint@" << clint_base << " {\n"
          "      compatible = \"riscv,clint0\";\n"
          "      interrupts-extended = <" << std::dec;
   for (size_t i = 0; i < procs.size(); i++)
     s << "&CPU" << i << "_intc 3 &CPU" << i << "_intc 7 ";
-  reg_t clintbs = CLINT_BASE;
+  reg_t clintbs = clint_base;
   reg_t clintsz = CLINT_SIZE;
   s << std::hex << ">;\n"
          "      reg = <0x" << (clintbs >> 32) << " 0x" << (clintbs & (uint32_t)-1) <<
@@ -339,25 +340,32 @@ void sim_t::make_dtb()
 
   dts = s.str();
   std::string dtb = dts_compile(dts);
+  FILE *dtbf = fopen("spike.dtb", "w");
+  for ( std::string::iterator it=dtb.begin(); it!=dtb.end(); ++it) fputc(*it, dtbf);
+  fclose(dtbf);
 
-  rom.insert(rom.end(), dtb.begin(), dtb.end());
+  std::vector<char> blockcontents(dtb.begin(), dtb.end());
+  blockcontents.resize(0x10000);
   const int align = 0x1000;
   rom.resize((rom.size() + align - 1) / align * align);
 
   boot_rom.reset(new rom_device_t(rom));
   bus.add_device(DEFAULT_RSTVEC, boot_rom.get());
 
+  blockram.reset(new rom_device_t(blockcontents));
+  bus.add_device(bram_base, blockram.get());
+
   vga.reset(new vga_device_t());
-  bus.add_device(0x41008000, vga.get());
+  bus.add_device(vga_base, vga.get());
 
   keyb.reset(new keyb_device_t());
-  bus.add_device(0x41000000, keyb.get());
+  bus.add_device(keyb_base, keyb.get());
 
   eth.reset(new eth_device_t());
-  bus.add_device(0x41020000, eth.get());
+  bus.add_device(eth_base, eth.get());
 
   sdcard.reset(new sd_device_t());
-  bus.add_device(0x41010000, sdcard.get());
+  bus.add_device(sd_base, sdcard.get());
 }
 
 char* sim_t::addr_to_mem(reg_t addr) {
