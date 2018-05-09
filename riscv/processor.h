@@ -2,6 +2,7 @@
 #ifndef _RISCV_PROCESSOR_H
 #define _RISCV_PROCESSOR_H
 
+#include <stdio.h>
 #include "decode.h"
 #include "config.h"
 #include "devices.h"
@@ -164,6 +165,9 @@ class processor_t : public abstract_device_t
 public:
   processor_t(const char* isa, sim_t* sim, uint32_t id, bool halt_on_reset=false);
   ~processor_t();
+
+  int cnt = 0;
+  FILE *trfd;
 
   void set_debug(bool value);
   void set_histogram(bool value);
