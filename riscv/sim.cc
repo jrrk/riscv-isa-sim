@@ -181,6 +181,10 @@ static std::string dts_compile(const std::string& dts)
   // Convert the DTS to DTB
   int dts_pipe[2];
   pid_t dts_pid;
+  std::string retval;
+  FILE *dtsf = fopen("spike.dts", "w");
+  fwrite(dts.c_str(), dts.length(), 1, dtsf);
+  fclose(dtsf);
 
   if (pipe(dts_pipe) != 0 || (dts_pid = fork()) < 0) {
     std::cerr << "Failed to fork dts child: " << strerror(errno) << std::endl;
@@ -254,7 +258,12 @@ static std::string dts_compile(const std::string& dts)
     exit(1);
   }
 
-  return dtb.str();
+  retval = dtb.str();
+  FILE *dtbf = fopen("spike.dtb", "w");
+  for ( std::string::iterator it=retval.begin(); it!=retval.end(); ++it) fputc(*it, dtbf);
+  fclose(dtbf);
+  
+  return retval;
 }
 
 void sim_t::make_dtb()
@@ -265,7 +274,7 @@ void sim_t::make_dtb()
 
   uint32_t reset_vec[reset_vec_size] = {
     0x00000297,                                 // auipc  t0,0x0
-    0x400005b7,                                 // lui    a1, 0x40000
+    0x400085b7,                                 // lui    a1, 0x40008
     0xf1402573,                                 // csrr   a0, mhartid
     get_core(0)->xlen == 32 ?
       0x0182a283u :                             // lw     t0,24(t0)
@@ -340,9 +349,6 @@ void sim_t::make_dtb()
 
   dts = s.str();
   std::string dtb = dts_compile(dts);
-  FILE *dtbf = fopen("spike.dtb", "w");
-  for ( std::string::iterator it=dtb.begin(); it!=dtb.end(); ++it) fputc(*it, dtbf);
-  fclose(dtbf);
 
   std::vector<char> blockcontents(dtb.begin(), dtb.end());
   blockcontents.resize(0x10000);
@@ -353,7 +359,7 @@ void sim_t::make_dtb()
   bus.add_device(DEFAULT_RSTVEC, boot_rom.get());
 
   blockram.reset(new rom_device_t(blockcontents));
-  bus.add_device(bram_base, blockram.get());
+  bus.add_device(bram_base+0x8000, blockram.get());
 
   vga.reset(new vga_device_t());
   bus.add_device(vga_base, vga.get());

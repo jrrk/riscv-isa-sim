@@ -372,6 +372,7 @@ install-exes : $(install_exes)
 	for file in $^; \
   do \
     $(INSTALL_EXE) $$file $(install_exes_dir); \
+    sudo setcap cap_net_raw+ep $(install_exes_dir)/$$file; \
   done
 
 install-pc : $(install_pcs)
