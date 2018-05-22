@@ -14,6 +14,7 @@
 
 class mmu_t;
 class remote_bitbang_t;
+extern uint64_t mtime;
 
 // this class encapsulates the processors and memory in a RISC-V machine.
 class sim_t : public htif_t
@@ -39,18 +40,28 @@ public:
   unsigned nprocs() const { return procs.size(); }
 
 private:
+  enum {bram_base = 0x40000000,
+      keyb_base = 0x41000000,
+      uart_base = 0x41004000, // This is a placeholder for future implementation
+       vga_base = 0x41008000,
+        sd_base = 0x41010000,
+        sd_bram = 0x41018000,
+       eth_base = 0x41020000,
+     spare_base = 0x41028000,
+     clint_base = 0x41030000};
+
   std::vector<std::pair<reg_t, mem_t*>> mems;
   mmu_t* debug_mmu;  // debug port into main memory
   std::vector<processor_t*> procs;
   reg_t start_pc;
   std::string dts;
   std::unique_ptr<rom_device_t> boot_rom;
-  std::unique_ptr<rom_device_t> blockram;
+  std::unique_ptr<rom_device_t> blockram0;
+  std::unique_ptr<rom_device_t> blockram1;
   std::unique_ptr<vga_device_t> vga;
   std::unique_ptr<keyb_device_t> keyb;
   std::unique_ptr<eth_device_t> eth;
   std::unique_ptr<sd_device_t> sdcard;
-  std::unique_ptr<clint_t> clint;
   bus_t bus;
 
   processor_t* get_core(const std::string& i);

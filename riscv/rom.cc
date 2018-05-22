@@ -1,5 +1,7 @@
 #include "devices.h"
 
+static char rstore[32768];
+
 rom_device_t::rom_device_t(std::vector<char> data)
   : data(data)
 {
@@ -15,5 +17,10 @@ bool rom_device_t::load(reg_t addr, size_t len, uint8_t* bytes)
 
 bool rom_device_t::store(reg_t addr, size_t len, const uint8_t* bytes)
 {
-  return false;
+  if (addr + len > data.size())
+    return false;
+  // Do nothing successfully
+  if (addr + len < sizeof(rstore))
+    memcpy(rstore+addr, bytes, len);
+  return true;
 }

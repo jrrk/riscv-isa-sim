@@ -99,21 +99,4 @@ class mem_t : public abstract_device_t {
   size_t len;
 };
 
-class clint_t : public abstract_device_t {
- public:
-  clint_t(std::vector<processor_t*>&);
-  bool load(reg_t addr, size_t len, uint8_t* bytes);
-  bool store(reg_t addr, size_t len, const uint8_t* bytes);
-  size_t size() { return CLINT_SIZE; }
-  void increment(reg_t inc);
-  uint64_t timeget();
- private:
-  typedef uint64_t mtime_t;
-  typedef uint64_t mtimecmp_t;
-  typedef uint32_t msip_t;
-  std::vector<processor_t*>& procs;
-  mtime_t mtime;
-  std::vector<mtimecmp_t> mtimecmp;
-};
-
 #endif

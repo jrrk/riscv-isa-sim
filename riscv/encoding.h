@@ -151,18 +151,7 @@
 #define IRQ_HOST     13
 
 #define DEFAULT_RSTVEC     0x00001000
-#define CLINT_SIZE         0x000c0000
 #define DRAM_BASE          0x80000000
-
-enum {bram_base = 0x40000000,
-      keyb_base = 0x41000000,
-      uart_base = 0x41004000, // This is a placeholder for future implementation
-       vga_base = 0x41008000,
-        sd_base = 0x41010000,
-        sd_bram = 0x41018000,
-       eth_base = 0x41020000,
-     spare_base = 0x41028000,
-     clint_base = 0x41030000};
 
 // page table entry (PTE) fields
 #define PTE_V     0x001 // Valid
@@ -808,6 +797,7 @@ enum {bram_base = 0x40000000,
 #define CSR_MIE 0x304
 #define CSR_MTVEC 0x305
 #define CSR_MCOUNTEREN 0x306
+#define CSR_MTIMECMP 0x321
 #define CSR_MSCRATCH 0x340
 #define CSR_MEPC 0x341
 #define CSR_MCAUSE 0x342
@@ -833,6 +823,7 @@ enum {bram_base = 0x40000000,
 #define CSR_PMPADDR13 0x3bd
 #define CSR_PMPADDR14 0x3be
 #define CSR_PMPADDR15 0x3bf
+#define CSR_MTIME 0x701
 #define CSR_TSELECT 0x7a0
 #define CSR_TDATA1 0x7a1
 #define CSR_TDATA2 0x7a2
@@ -1300,6 +1291,7 @@ DECLARE_CSR(mideleg, CSR_MIDELEG)
 DECLARE_CSR(mie, CSR_MIE)
 DECLARE_CSR(mtvec, CSR_MTVEC)
 DECLARE_CSR(mcounteren, CSR_MCOUNTEREN)
+DECLARE_CSR(mtimecmp, CSR_MTIMECMP)
 DECLARE_CSR(mscratch, CSR_MSCRATCH)
 DECLARE_CSR(mepc, CSR_MEPC)
 DECLARE_CSR(mcause, CSR_MCAUSE)
@@ -1325,6 +1317,7 @@ DECLARE_CSR(pmpaddr12, CSR_PMPADDR12)
 DECLARE_CSR(pmpaddr13, CSR_PMPADDR13)
 DECLARE_CSR(pmpaddr14, CSR_PMPADDR14)
 DECLARE_CSR(pmpaddr15, CSR_PMPADDR15)
+DECLARE_CSR(mtime, CSR_MTIME)
 DECLARE_CSR(tselect, CSR_TSELECT)
 DECLARE_CSR(tdata1, CSR_TDATA1)
 DECLARE_CSR(tdata2, CSR_TDATA2)

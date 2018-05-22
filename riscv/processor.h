@@ -121,7 +121,8 @@ struct state_t
   reg_t tselect;
   mcontrol_t mcontrol[num_triggers];
   reg_t tdata2[num_triggers];
-
+  reg_t time;
+  
   uint32_t fflags;
   uint32_t frm;
   bool serialized; // whether timer CSRs are in a well-defined state
@@ -304,7 +305,8 @@ private:
   std::string isa_string;
   bool histogram_enabled;
   bool halt_on_reset;
-
+  uint64_t mtimecmp;
+  
   std::vector<insn_desc_t> instructions;
   std::map<reg_t,uint64_t> pc_histogram;
 

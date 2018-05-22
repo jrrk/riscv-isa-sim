@@ -534,6 +534,10 @@ void processor_t::set_csr(int which, reg_t val)
     case CSR_DSCRATCH:
       state.dscratch = val;
       break;
+    case CSR_MTIMECMP:
+      //      printf("write_csr mtimecmp with %lx\n", val);
+      mtimecmp = val;
+      break;
   }
 }
 
@@ -686,6 +690,10 @@ reg_t processor_t::get_csr(int which)
       return state.dpc;
     case CSR_DSCRATCH:
       return state.dscratch;
+    case CSR_TIME:
+      return mtime;
+    case CSR_MTIMECMP:
+      return mtimecmp;
   }
   throw trap_illegal_instruction(0);
 }

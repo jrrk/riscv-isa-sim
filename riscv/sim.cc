@@ -15,6 +15,7 @@
 #include <sys/types.h>
 
 volatile bool ctrlc_pressed = false;
+uint64_t mtime;
 
 #define LOGF
 
@@ -63,9 +64,10 @@ sim_t::sim_t(const char* isa, size_t nprocs, bool halted, reg_t start_pc,
     }
   }
 
+#if 0
   clint.reset(new clint_t(procs));
   bus.add_device(clint_base, clint.get());
-
+#endif
 }
 
 sim_t::~sim_t()
@@ -98,12 +100,12 @@ void sim_t::main()
       }
     if (sd_irq||keyb_irq)
       {
-        /* need to service simulated SD card */
+        /* need to service keyboard or simulated SD card */
         procs[current_proc]->state.mip |= ((reg_t)1 << IRQ_S_SOFT);
       }
     else
       {
-        /* finish servicing simulated SD card */
+        /* finish servicing keyboard or simulated SD card */
         procs[current_proc]->state.mip &= ~((reg_t)1 << IRQ_S_SOFT);
       }
   }
@@ -130,8 +132,11 @@ void sim_t::step(size_t n)
       procs[current_proc]->yield_load_reservation();
       if (++current_proc == procs.size()) {
         current_proc = 0;
-        clint->increment(INTERLEAVE / INSNS_PER_RTC_TICK);
+        mtime += INTERLEAVE / INSNS_PER_RTC_TICK;
       }
+      procs[current_proc]->state.mip &= ~MIP_MTIP;
+      if (mtime >= procs[current_proc]->mtimecmp)
+        procs[current_proc]->state.mip |= MIP_MTIP;
 
       host->switch_to();
     }
@@ -309,11 +314,13 @@ void sim_t::make_dtb()
          "      riscv,isa = \"" << procs[i]->isa_string << "\";\n"
          "      mmu-type = \"riscv," << (procs[i]->max_xlen <= 32 ? "sv32" : "sv48") << "\";\n"
          "      clock-frequency = <" << CPU_HZ << ">;\n"
+#if 1
          "      CPU" << i << "_intc: interrupt-controller {\n"
          "        #interrupt-cells = <1>;\n"
          "        interrupt-controller;\n"
          "        compatible = \"riscv,cpu-intc\";\n"
          "      };\n"
+#endif      
          "    };\n";
   }
   s <<   "  };\n";
@@ -330,6 +337,7 @@ void sim_t::make_dtb()
          "    #size-cells = <2>;\n"
          "    compatible = \"ucbbar,spike-bare-soc\", \"simple-bus\";\n"
          "    ranges;\n"
+#ifdef CLINTDTB  
          "    clint@" << clint_base << " {\n"
          "      compatible = \"riscv,clint0\";\n"
          "      interrupts-extended = <" << std::dec;
@@ -341,25 +349,51 @@ void sim_t::make_dtb()
          "      reg = <0x" << (clintbs >> 32) << " 0x" << (clintbs & (uint32_t)-1) <<
                      " 0x" << (clintsz >> 32) << " 0x" << (clintsz & (uint32_t)-1) << ">;\n"
          "    };\n"
+#else
+         "    dummy@" << clint_base << " {\n"
+    "      compatible = \"riscv,dummy\";\n";
+#if 1
+  s <<   "      interrupts-extended = <" << std::dec;
+  for (size_t i = 0; i < procs.size(); i++)
+    s << "&CPU" << i << "_intc 3 &CPU" << i << "_intc 7 ";
+  s << std::hex << ">;\n";
+#endif  
+#if 0  
+  reg_t clintbs = clint_base;
+  reg_t clintsz = CLINT_SIZE;
+  s <<   "      reg = <0x" << (clintbs >> 32) << " 0x" << (clintbs & (uint32_t)-1) <<
+                     " 0x" << (clintsz >> 32) << " 0x" << (clintsz & (uint32_t)-1) << ">;\n"
+#endif
+  s <<   "    };\n"
+#endif    
          "  };\n"
+#ifdef HTIFDTB
          "  htif {\n"
          "    compatible = \"ucb,htif0\";\n"
          "  };\n"
+#endif    
          "};\n";
 
   dts = s.str();
   std::string dtb = dts_compile(dts);
-
+#ifdef RING_BUF
+  std::string ring_str = "";
+  std::vector<char> ring_buf(ring_str.begin(), ring_str.end());
+  ring_buf.resize(0x8000);
+#endif  
   std::vector<char> blockcontents(dtb.begin(), dtb.end());
-  blockcontents.resize(0x10000);
+  blockcontents.resize(0x8000);
   const int align = 0x1000;
   rom.resize((rom.size() + align - 1) / align * align);
 
   boot_rom.reset(new rom_device_t(rom));
   bus.add_device(DEFAULT_RSTVEC, boot_rom.get());
-
-  blockram.reset(new rom_device_t(blockcontents));
-  bus.add_device(bram_base+0x8000, blockram.get());
+#ifdef RING_BUF
+  blockram0.reset(new rom_device_t(ring_buf));
+  bus.add_device(bram_base, blockram0.get());
+#endif  
+  blockram1.reset(new rom_device_t(blockcontents));
+  bus.add_device(bram_base+0x8000, blockram1.get());
 
   vga.reset(new vga_device_t());
   bus.add_device(vga_base, vga.get());

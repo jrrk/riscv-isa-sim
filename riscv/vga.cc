@@ -1,18 +1,34 @@
+// #define CURSES
+
 #ifdef CURSES
 #include <ncurses.h>
 #endif
 #include "devices.h"
 
 static char screen[4096];
-static FILE *logf;
+
+static void put(int ch)
+{
+  static FILE *logf;
+  if (!logf)
+    {
+      logf = fopen("vga.log", "w");
+      if (!logf)
+        abort();
+    }
+  if (ch < 0)
+    fflush(logf);
+  else
+    {
+      putchar(ch);
+      putc(ch, logf);
+    }
+}
 
 vga_device_t::vga_device_t()
 {
 #ifdef CURSES
   initscr();
-  logf = fopen("vga.log", "w");
-#else
-  logf = stdout;
 #endif  
 }
 
@@ -35,17 +51,21 @@ bool vga_device_t::store(reg_t addr, size_t len, const uint8_t* bytes)
   while (len--)
     {
       int ch = *bytes++ & 0x7F;
+#ifdef CURSES
       if (ch >= ' ')
         {
-#ifdef CURSES
           addch(ch);
-#endif
         }
-      fputc(ch, logf);
+#else      
+      if (addr++ % 128 == 0)
+        put('\n');
+#endif
+      put(ch);
     }
 #ifdef CURSES
   refresh();
+#else      
+  fflush(stdout);
 #endif
-  fflush(logf);
   return true;
 }
